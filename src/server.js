@@ -1,12 +1,27 @@
+const express = require("express");
+const mongoose = require("mongoose");
 require("dotenv").config();
 
-const app = require("./app");
-const connectDB = require("./config/db");
+const authRoutes = require("./routes/auth.routes");
+const authMiddleware = require("./middleware/auth.middleware");
 
-const PORT = process.env.PORT || 5000;
+const app = express();
 
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+app.use(express.json());
+
+// MongoDB connect
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.error("DB connection error:", err));
+
+// Auth routes
+app.use("/api/auth", authRoutes);
+
+// Protected route
+app.get("/api/protected", authMiddleware, (req, res) => {
+  res.json({ message: "Access granted", user: req.user });
+});
+
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
 });
